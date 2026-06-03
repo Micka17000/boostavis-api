@@ -2,3 +2,4 @@ flask
 reportlab
 qrcode[pil]
 Pillow
+requests
