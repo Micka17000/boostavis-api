@@ -9,19 +9,29 @@ import os
 
 app = Flask(__name__)
 
-@app.route('/generate', methods=['GET'])
+@app.route('/generate', methods=['GET', 'POST'])
 def generate():
-    commerce = request.args.get('commerce', 'Votre Commerce')
-    google   = request.args.get('google', 'https://search.google.com/local/writereview')
-    c1       = request.args.get('c1', '4f46e5')
-    c2       = request.args.get('c2', '7c3aed')
-    lots = []
-    for i in range(1, 9):
-        l = request.args.get(f'l{i}')
-        if l:
-            lots.append(l)
-    if not lots:
-        lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        commerce = data.get('commerce', 'Votre Commerce')
+        google   = data.get('google', 'https://search.google.com/local/writereview')
+        c1       = data.get('c1', '4f46e5')
+        c2       = data.get('c2', '7c3aed')
+        lots = [data.get(f'l{i}') for i in range(1,9) if data.get(f'l{i}')]
+        if not lots:
+            lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
+    else:
+        commerce = request.args.get('commerce', 'Votre Commerce')
+        google   = request.args.get('google', 'https://search.google.com/local/writereview')
+        c1       = request.args.get('c1', '4f46e5')
+        c2       = request.args.get('c2', '7c3aed')
+        lots = []
+        for i in range(1, 9):
+            l = request.args.get(f'l{i}')
+            if l:
+                lots.append(l)
+        if not lots:
+            lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
 
     roue_params = f"commerce={commerce.replace(' ', '+')}&google={google}"
     for i, lot in enumerate(lots, 1):
