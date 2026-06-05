@@ -47,21 +47,6 @@ def resolve_color(val, secondary=False, default="4f46e5"):
         return v[1:]
     return v if len(v) == 6 else default
 
-def get_field(data, *keys):
-    # Reconstitue les clés fragmentées
-    data_normalized = {}
-    for dk in data:
-        normalized = dk.strip().lower().replace(' ', '')
-        data_normalized[normalized] = data[dk]
-    
-    for k in keys:
-        normalized_k = k.strip().lower().replace(' ', '')
-        if normalized_k in data_normalized:
-            val = data_normalized[normalized_k]
-            if val and str(val).strip():
-                return str(val).strip()
-    return None
-
 def generate_pdf(commerce, google, c1, c2, lots, roue_url):
     buf = io.BytesIO()
     W, H = A4
@@ -143,17 +128,19 @@ def generate_pdf(commerce, google, c1, c2, lots, roue_url):
 def generate():
     if request.method == 'POST':
         data = request.get_json() or {}
-        commerce = get_field(data, 'commerce', 'Nom de votre commerce') or 'Votre Commerce'
-        google   = get_field(data, 'google', 'Lien Google Maps de votre commerce') or 'https://search.google.com/local/writereview'
-        c1_raw   = get_field(data, 'c1', 'Couleur principale de votre roue') or 'violet'
-        c2_raw   = get_field(data, 'c2', 'Couleur secondaire de votre roue') or 'violet'
+        
+        commerce = next((str(v).strip() for k,v in data.items() if 'commerce' in k.lower() and 'google' not in k.lower() and v), 'Votre Commerce')
+        google = next((str(v).strip() for k,v in data.items() if 'google' in k.lower() or 'maps' in k.lower() and v), 'https://search.google.com/local/writereview')
+        c1_raw = next((str(v).strip() for k,v in data.items() if 'principale' in k.lower() and v), 'violet')
+        c2_raw = next((str(v).strip() for k,v in data.items() if 'secondaire' in k.lower() and v), 'violet')
         lots = []
         for i in range(1, 9):
-            l = get_field(data, f'l{i}', f'Cadeau {i}')
-            if l:
-                lots.append(l)
+            val = next((str(v).strip() for k,v in data.items() if f'cadeau {i}' in k.lower() and v), None)
+            if val:
+                lots.append(val)
         if not lots:
             lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
+
     else:
         commerce = request.args.get('commerce', 'Votre Commerce')
         google   = request.args.get('google', 'https://search.google.com/local/writereview')
