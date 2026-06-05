@@ -48,12 +48,18 @@ def resolve_color(val, secondary=False, default="4f46e5"):
     return v if len(v) == 6 else default
 
 def get_field(data, *keys):
+    # Reconstitue les clés fragmentées
+    data_normalized = {}
+    for dk in data:
+        normalized = dk.strip().lower().replace(' ', '')
+        data_normalized[normalized] = data[dk]
+    
     for k in keys:
-        for dk in data:
-            if dk.strip().lower() == k.strip().lower():
-                val = data[dk]
-                if val and str(val).strip():
-                    return str(val).strip()
+        normalized_k = k.strip().lower().replace(' ', '')
+        if normalized_k in data_normalized:
+            val = data_normalized[normalized_k]
+            if val and str(val).strip():
+                return str(val).strip()
     return None
 
 def generate_pdf(commerce, google, c1, c2, lots, roue_url):
