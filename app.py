@@ -10,6 +10,29 @@ import os
 
 app = Flask(__name__)
 
+COULEURS = {
+    "violet (par défaut)": ("4f46e5", "7c3aed"),
+    "violet": ("4f46e5", "7c3aed"),
+    "bleu": ("3b82f6", "1d4ed8"),
+    "rouge": ("ef4444", "b91c1c"),
+    "vert": ("22c55e", "15803d"),
+    "orange": ("f97316", "c2410c"),
+    "rose": ("ec4899", "be185d"),
+    "noir": ("1a1a2e", "0f172a"),
+    "or/jaune": ("f59e0b", "d97706"),
+    "jaune": ("f59e0b", "d97706"),
+}
+
+def resolve_color(val, default="4f46e5"):
+    if not val:
+        return default
+    v = val.strip().lower()
+    if v in COULEURS:
+        return COULEURS[v][0]
+    if v.startswith("#"):
+        return v[1:]
+    return v if len(v) == 6 else default
+
 def generate_pdf(commerce, google, c1, c2, lots, roue_url):
     buf = io.BytesIO()
     W, H = A4
@@ -93,16 +116,16 @@ def generate():
         data = request.get_json() or {}
         commerce = data.get('commerce', 'Votre Commerce')
         google   = data.get('google', 'https://search.google.com/local/writereview')
-        c1       = data.get('c1', '4f46e5')
-        c2       = data.get('c2', '7c3aed')
+        c1_raw   = data.get('c1', 'violet')
+        c2_raw   = data.get('c2', 'violet')
         lots = [data.get(f'l{i}') for i in range(1,9) if data.get(f'l{i}')]
         if not lots:
             lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
     else:
         commerce = request.args.get('commerce', 'Votre Commerce')
         google   = request.args.get('google', 'https://search.google.com/local/writereview')
-        c1       = request.args.get('c1', '4f46e5')
-        c2       = request.args.get('c2', '7c3aed')
+        c1_raw   = request.args.get('c1', 'violet')
+        c2_raw   = request.args.get('c2', 'violet')
         lots = []
         for i in range(1, 9):
             l = request.args.get(f'l{i}')
@@ -110,6 +133,9 @@ def generate():
                 lots.append(l)
         if not lots:
             lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
+
+    c1 = resolve_color(c1_raw)
+    c2 = resolve_color(c2_raw, "7c3aed")
 
     roue_params = f"commerce={commerce.replace(' ', '+')}&google={google}"
     for i, lot in enumerate(lots, 1):
