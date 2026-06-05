@@ -11,27 +11,50 @@ import os
 app = Flask(__name__)
 
 COULEURS = {
-    "violet (par défaut)": ("4f46e5", "7c3aed"),
-    "violet": ("4f46e5", "7c3aed"),
-    "bleu": ("3b82f6", "1d4ed8"),
-    "rouge": ("ef4444", "b91c1c"),
-    "vert": ("22c55e", "15803d"),
-    "orange": ("f97316", "c2410c"),
-    "rose": ("ec4899", "be185d"),
-    "noir": ("1a1a2e", "0f172a"),
-    "or/jaune": ("f59e0b", "d97706"),
-    "jaune": ("f59e0b", "d97706"),
+    "violet (par défaut)": "4f46e5",
+    "violet": "4f46e5",
+    "bleu": "3b82f6",
+    "rouge": "ef4444",
+    "vert": "22c55e",
+    "orange": "f97316",
+    "rose": "ec4899",
+    "noir": "1a1a2e",
+    "or/jaune": "f59e0b",
+    "jaune": "f59e0b",
 }
 
-def resolve_color(val, default="4f46e5"):
+COULEURS2 = {
+    "violet (par défaut)": "7c3aed",
+    "violet": "7c3aed",
+    "bleu": "1d4ed8",
+    "rouge": "b91c1c",
+    "vert": "15803d",
+    "orange": "c2410c",
+    "rose": "be185d",
+    "noir": "0f172a",
+    "or/jaune": "d97706",
+    "jaune": "d97706",
+}
+
+def resolve_color(val, secondary=False, default="4f46e5"):
     if not val:
         return default
     v = val.strip().lower()
-    if v in COULEURS:
-        return COULEURS[v][0]
+    table = COULEURS2 if secondary else COULEURS
+    if v in table:
+        return table[v]
     if v.startswith("#"):
         return v[1:]
     return v if len(v) == 6 else default
+
+def get_field(data, *keys):
+    for k in keys:
+        for dk in data:
+            if dk.strip().lower() == k.strip().lower():
+                val = data[dk]
+                if val and str(val).strip():
+                    return str(val).strip()
+    return None
 
 def generate_pdf(commerce, google, c1, c2, lots, roue_url):
     buf = io.BytesIO()
@@ -114,11 +137,15 @@ def generate_pdf(commerce, google, c1, c2, lots, roue_url):
 def generate():
     if request.method == 'POST':
         data = request.get_json() or {}
-        commerce = data.get('commerce', 'Votre Commerce')
-        google   = data.get('google', 'https://search.google.com/local/writereview')
-        c1_raw   = data.get('c1', 'violet')
-        c2_raw   = data.get('c2', 'violet')
-        lots = [data.get(f'l{i}') for i in range(1,9) if data.get(f'l{i}')]
+        commerce = get_field(data, 'commerce', 'Nom de votre commerce') or 'Votre Commerce'
+        google   = get_field(data, 'google', 'Lien Google Maps de votre commerce') or 'https://search.google.com/local/writereview'
+        c1_raw   = get_field(data, 'c1', 'Couleur principale de votre roue') or 'violet'
+        c2_raw   = get_field(data, 'c2', 'Couleur secondaire de votre roue') or 'violet'
+        lots = []
+        for i in range(1, 9):
+            l = get_field(data, f'l{i}', f'Cadeau {i}')
+            if l:
+                lots.append(l)
         if not lots:
             lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
     else:
@@ -134,8 +161,8 @@ def generate():
         if not lots:
             lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
 
-    c1 = resolve_color(c1_raw)
-    c2 = resolve_color(c2_raw, "7c3aed")
+    c1 = resolve_color(c1_raw, secondary=False)
+    c2 = resolve_color(c2_raw, secondary=True, default="7c3aed")
 
     roue_params = f"commerce={commerce.replace(' ', '+')}&google={google}"
     for i, lot in enumerate(lots, 1):
