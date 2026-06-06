@@ -133,17 +133,26 @@ def debug():
 def generate():
     if request.method == 'POST':
         data = request.get_json() or {}
-        commerce = next((str(v).strip() for k,v in data.items() if 'commerce' in k.lower() and 'google' not in k.lower() and v), 'Votre Commerce')
-        google = next((str(v).strip() for k,v in data.items() if ('google' in k.lower() or 'maps' in k.lower()) and v), 'https://search.google.com/local/writereview')
-        c1_raw = next((str(v).strip() for k,v in data.items() if 'principale' in k.lower() and v), 'violet')
-        c2_raw = next((str(v).strip() for k,v in data.items() if 'secondaire' in k.lower() and v), 'violet')
+
+        # Champs courts envoyés par Make (l1, l2, c1, c2, commerce, google)
+        commerce = data.get('commerce') or next((str(v).strip() for k,v in data.items() if 'commerce' in k.lower() and 'google' not in k.lower() and v), 'Votre Commerce')
+        google = data.get('google') or next((str(v).strip() for k,v in data.items() if ('google' in k.lower() or 'maps' in k.lower()) and v), 'https://search.google.com/local/writereview')
+        c1_raw = data.get('c1') or next((str(v).strip() for k,v in data.items() if 'principale' in k.lower() and v), 'violet')
+        c2_raw = data.get('c2') or next((str(v).strip() for k,v in data.items() if 'secondaire' in k.lower() and v), 'violet')
+
         lots = []
         for i in range(1, 9):
-            val = next((str(v).strip() for k,v in data.items() if f'cadeau {i}' in k.lower() and v), None)
+            # Cherche d'abord la clé courte l1, l2...
+            val = data.get(f'l{i}')
+            # Si pas trouvé, cherche "cadeau i" dans les clés longues
+            if not val:
+                val = next((str(v).strip() for k,v in data.items() if f'cadeau {i}' in k.lower() and v), None)
             if val:
-                lots.append(val)
+                lots.append(str(val).strip())
+
         if not lots:
             lots = ['Cafe offert', '-10%', 'Dessert offert', 'Boisson offerte']
+
     else:
         commerce = request.args.get('commerce', 'Votre Commerce')
         google   = request.args.get('google', 'https://search.google.com/local/writereview')
