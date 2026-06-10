@@ -1199,7 +1199,7 @@ class handler(BaseHTTPRequestHandler):
         for i, lot in enumerate(lots, 1):
             roue_params += f"&l{i}={lot.replace(' ', '+')}"
         roue_params += f"&c1=%23{c1}&c2=%23{c2}"
-        roue_url = f"https://boostavis-demo.vercel.app?{roue_params}"
+        roue_url = f"https://boostavis-client.vercel.app?{roue_params}"
  
         buf = io.BytesIO()
         W, H = A4
