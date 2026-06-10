@@ -39,7 +39,7 @@ class handler(BaseHTTPRequestHandler):
 
         roue_params += f"&c1=%23{c1}&c2=%23{c2}"
 
-        roue_url = f"https://boostavis-client.vercel.app?{roue_params}"
+        roue_url = f"https://boostavis-client-2wl9exofr-micka17000s-projects.vercel.app?{roue_params}"
 
         buffer = io.BytesIO()
         width, height = A4
