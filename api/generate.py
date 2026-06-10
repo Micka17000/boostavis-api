@@ -20,8 +20,7 @@ class handler(BaseHTTPRequestHandler):
 
         commerce = g("commerce", "Votre Commerce")
         google = g("google", "https://search.google.com/local/writereview")
-        c1 = g("c1", "4f46e5").replace("#", "")
-        c2 = g("c2", "7c3aed").replace("#", "")
+
 
         lots = []
         for i in range(1, 9):
@@ -37,7 +36,7 @@ class handler(BaseHTTPRequestHandler):
         for i, lot in enumerate(lots, 1):
             roue_params += f"&l{i}={quote_plus(lot)}"
 
-        roue_params += f"&c1=%23{c1}&c2=%23{c2}"
+        
 
         roue_url = f"https://boostavis-client-2wl9exofr-micka17000s-projects.vercel.app?{roue_params}"
 
