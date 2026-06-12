@@ -38,7 +38,8 @@ class handler(BaseHTTPRequestHandler):
 
         
 
-https://boostavis-client.vercel.app
+        roue_url = f"https://boostavis-client.vercel.app?{roue_params}"
+
         buffer = io.BytesIO()
         width, height = A4
         pdf = canvas.Canvas(buffer, pagesize=A4)
