@@ -7,6 +7,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 import os
+from urllib.parse import quote_plus
 
 app = Flask(__name__)
 
@@ -35,6 +36,7 @@ COULEURS2 = {
     "or/jaune": "d97706",
     "jaune": "d97706",
 }
+
 
 def resolve_color(val, secondary=False, default="4f46e5"):
     if not val:
@@ -172,14 +174,16 @@ def generate():
             "Votre Commerce",
         )
 
-        google = data.get("google") or next(
+        ville = data.get("ville") or next(
             (
                 str(v).strip()
                 for k, v in data.items()
-                if ("google" in k.lower() or "maps" in k.lower()) and v
+                if "ville" in k.lower() and v
             ),
-            "https://search.google.com/local/writereview",
+            "",
         )
+
+        google = "https://www.google.com/search?q=" + quote_plus(f"{commerce} {ville} avis Google")
 
         c1_raw = data.get("c1") or next(
             (str(v).strip() for k, v in data.items() if "principale" in k.lower() and v),
@@ -214,7 +218,11 @@ def generate():
 
     else:
         commerce = request.args.get("commerce", "Votre Commerce")
-        google = request.args.get("google", "https://search.google.com/local/writereview")
+        ville = request.args.get("ville", "")
+        google = request.args.get("google") or "https://www.google.com/search?q=" + quote_plus(
+            f"{commerce} {ville} avis Google"
+        )
+
         c1_raw = request.args.get("c1", "violet")
         c2_raw = request.args.get("c2", "violet")
 
@@ -231,14 +239,13 @@ def generate():
     c1 = resolve_color(c1_raw, secondary=False)
     c2 = resolve_color(c2_raw, secondary=True, default="7c3aed")
 
-    roue_params = f"commerce={commerce.replace(' ', '+')}&google={google}"
+    roue_params = f"commerce={quote_plus(commerce)}&google={quote_plus(google)}"
 
     for i, lot in enumerate(lots, 1):
-        roue_params += f"&l{i}={lot.replace(' ', '+')}"
+        roue_params += f"&l{i}={quote_plus(lot)}"
 
     roue_params += f"&c1=%23{c1}&c2=%23{c2}"
 
-    # IMPORTANT : URL réelle client, pas la démo
     roue_url = f"https://boostavis-client.vercel.app?{roue_params}"
 
     pdf_buf = generate_pdf(commerce, google, c1, c2, lots, roue_url)
