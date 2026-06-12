@@ -54,6 +54,20 @@ def resolve_color(val, secondary=False, default="4f46e5"):
     return v if len(v) == 6 else default
 
 
+def build_google_link(commerce, ville="", google_value=""):
+    google_value = (google_value or "").strip()
+    ville = (ville or "").strip()
+
+    if google_value.startswith("http://") or google_value.startswith("https://"):
+        return google_value
+
+    if google_value and not ville:
+        ville = google_value
+
+    query = f"{commerce} {ville} avis Google".strip()
+    return "https://www.google.com/search?q=" + quote_plus(query)
+
+
 def generate_pdf(commerce, google, c1, c2, lots, roue_url):
     buf = io.BytesIO()
     W, H = A4
@@ -183,7 +197,16 @@ def generate():
             "",
         )
 
-        google = "https://www.google.com/search?q=" + quote_plus(f"{commerce} {ville} avis Google")
+        google_value = data.get("google") or next(
+            (
+                str(v).strip()
+                for k, v in data.items()
+                if ("google" in k.lower() or "maps" in k.lower()) and v
+            ),
+            "",
+        )
+
+        google = build_google_link(commerce, ville, google_value)
 
         c1_raw = data.get("c1") or next(
             (str(v).strip() for k, v in data.items() if "principale" in k.lower() and v),
@@ -219,9 +242,8 @@ def generate():
     else:
         commerce = request.args.get("commerce", "Votre Commerce")
         ville = request.args.get("ville", "")
-        google = request.args.get("google") or "https://www.google.com/search?q=" + quote_plus(
-            f"{commerce} {ville} avis Google"
-        )
+        google_value = request.args.get("google", "")
+        google = build_google_link(commerce, ville, google_value)
 
         c1_raw = request.args.get("c1", "violet")
         c2_raw = request.args.get("c2", "violet")
